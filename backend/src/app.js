@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import pool from "./db/index.js";
 import authRoutes from "./routes/auth.routes.js";
+import bookingRoutes from "./routes/booking.routes.js";
 import eventRoutes from "./routes/event.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import logger from "./utils/logger.js";
@@ -39,6 +40,7 @@ app.get("/health/db", async (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/bookings", bookingRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/users", userRoutes);
 

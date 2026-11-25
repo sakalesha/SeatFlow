@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getEventSeats } from "../controllers/booking.controller.js";
 import {
   createEventHandler,
   deleteEventHandler,
@@ -11,6 +12,7 @@ import { authenticate, authorize } from "../middleware/auth.js";
 const router = Router();
 
 router.get("/", getEvents);
+router.get("/:id/seats", getEventSeats);
 router.get("/:id", getEventById);
 router.post("/", authenticate, authorize("admin"), createEventHandler);
 router.patch("/:id", authenticate, authorize("admin"), updateEventHandler);
