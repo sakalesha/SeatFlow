@@ -1,6 +1,8 @@
 import express from "express";
 import morgan from "morgan";
 import pool from "./db/index.js";
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import logger from "./utils/logger.js";
 
 const app = express();
@@ -34,6 +36,9 @@ app.get("/health/db", async (req, res) => {
     });
   }
 });
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
