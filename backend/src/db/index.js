@@ -1,0 +1,14 @@
+import "dotenv/config";
+import pg from "pg";
+
+const { Pool } = pg;
+
+const isLocal =
+  !process.env.DATABASE_URL
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isLocal ? false : { rejectUnauthorized: false },
+});
+
+export default pool;
