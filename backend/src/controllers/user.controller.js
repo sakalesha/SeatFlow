@@ -1,7 +1,6 @@
 import { listUsers, updateUserRole } from "../models/user.model.js";
+import { isValidUuid } from "../utils/validation.js";
 
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_ROLES = new Set(["user", "admin"]);
 
 export async function getUsers(req, res, next) {
@@ -18,7 +17,7 @@ export async function changeUserRole(req, res, next) {
     const { id } = req.params;
     const { role } = req.body ?? {};
 
-    if (!UUID_REGEX.test(id)) {
+    if (!isValidUuid(id)) {
       return res.status(400).json({ error: "Invalid user id" });
     }
     if (!VALID_ROLES.has(role)) {

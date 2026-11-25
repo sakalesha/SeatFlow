@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import {
   clearStoredToken,
   fetchCurrentUser,
@@ -7,50 +8,10 @@ import {
 } from './api/auth'
 import './App.css'
 import AuthForm from './components/AuthForm'
+import EventsDashboard from './components/EventsDashboard'
 import SeatingPreview from './components/SeatingPreview'
-import SessionPanel from './components/SessionPanel'
 
-function App() {
-  const [mode, setMode] = useState('login')
-  const [user, setUser] = useState(null)
-  const [checkingSession, setCheckingSession] = useState(() => Boolean(getStoredToken()))
-
-  useEffect(() => {
-    const token = getStoredToken()
-    if (!token) return
-
-    let cancelled = false
-    fetchCurrentUser(token)
-      .then((data) => {
-        if (!cancelled) {
-          setUser(data.user)
-        }
-      })
-      .catch(() => {
-        clearStoredToken()
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setCheckingSession(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  function handleAuthSuccess({ user: authenticatedUser, token }) {
-    setStoredToken(token)
-    setUser(authenticatedUser)
-  }
-
-  function handleSignOut() {
-    clearStoredToken()
-    setUser(null)
-    setMode('login')
-  }
-
+function AuthLayout({ mode, checkingSession, onModeChange, onSuccess }) {
   return (
     <main className="auth-shell">
       <section className="brand-column">
@@ -95,14 +56,109 @@ function App() {
               <span className="mono-label">VERIFYING SESSION</span>
               <p>Checking your saved SeatFlow credentials…</p>
             </div>
-          ) : user ? (
-            <SessionPanel user={user} onSignOut={handleSignOut} />
           ) : (
-            <AuthForm mode={mode} onModeChange={setMode} onSuccess={handleAuthSuccess} />
+            <AuthForm mode={mode} onModeChange={onModeChange} onSuccess={onSuccess} />
           )}
         </div>
       </section>
     </main>
+  )
+}
+
+function App() {
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [checkingSession, setCheckingSession] = useState(() => Boolean(getStoredToken()))
+
+  useEffect(() => {
+    const token = getStoredToken()
+    if (!token) return
+
+    let cancelled = false
+    fetchCurrentUser(token)
+      .then((data) => {
+        if (!cancelled) {
+          setUser(data.user)
+        }
+      })
+      .catch(() => {
+        clearStoredToken()
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setCheckingSession(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  function handleAuthSuccess({ user: authenticatedUser, token }) {
+    setStoredToken(token)
+    setUser(authenticatedUser)
+    navigate('/events', { replace: true })
+  }
+
+  function handleSignOut() {
+    clearStoredToken()
+    setUser(null)
+    navigate('/login', { replace: true })
+  }
+
+  function handleModeChange(nextMode) {
+    navigate(nextMode === 'register' ? '/register' : '/login')
+  }
+
+  if (checkingSession) {
+    return <AuthLayout mode="login" checkingSession onModeChange={handleModeChange} onSuccess={handleAuthSuccess} />
+  }
+
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          user ? (
+            <Navigate to="/events" replace />
+          ) : (
+            <AuthLayout
+              mode="login"
+              checkingSession={false}
+              onModeChange={handleModeChange}
+              onSuccess={handleAuthSuccess}
+            />
+          )
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          user ? (
+            <Navigate to="/events" replace />
+          ) : (
+            <AuthLayout
+              mode="register"
+              checkingSession={false}
+              onModeChange={handleModeChange}
+              onSuccess={handleAuthSuccess}
+            />
+          )
+        }
+      />
+      <Route
+        path="/events"
+        element={
+          user ? (
+            <EventsDashboard user={user} onSignOut={handleSignOut} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route path="*" element={<Navigate to={user ? '/events' : '/login'} replace />} />
+    </Routes>
   )
 }
 
